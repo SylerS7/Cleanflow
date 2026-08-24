@@ -831,10 +831,18 @@ function generateSample() {
 
 // ── EXPORT ────────────────────────────────────────────────
 function exportData(data, filename) {
+  if (!data || !data.length) {
+    showToast('No data available to export.', 'error');
+    return;
+  }
   const csv = [headers.join(','), ...data.map(r => headers.map(h => `"${String(r[h]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-  a.download = filename; a.click();
+  a.download = filename;
+  document.body.appendChild(a); // Required for some browsers
+  a.click();
+  document.body.removeChild(a);
+  showToast(`Exported ${filename}`, 'success');
 }
 
 // ── INIT ──────────────────────────────────────────────────
