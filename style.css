@@ -584,6 +584,49 @@ body {
 .finding-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
 .finding-body  { font-size: 12px; color: var(--txt2); line-height: 1.6; }
 
+/* ── SUMMARY BANNER ──────────────────────────────── */
+.summary-banner {
+  display: flex; align-items: center; gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.banner-col {
+  flex: 1; padding: 20px 28px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.banner-col--before { border-right: 1px solid var(--border); }
+.banner-col--after  { background: rgba(34,197,94,0.04); }
+.banner-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--txt3);
+}
+.banner-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.bstat {
+  font-size: 12.5px; color: var(--txt2);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-l);
+  border-radius: 20px; padding: 5px 13px;
+  display: flex; align-items: center; gap: 5px;
+}
+.bstat-num { font-weight: 800; color: var(--txt); font-size: 13px; }
+.bstat--red   { border-color: rgba(244,63,94,0.3);  background: rgba(244,63,94,0.07);  color: var(--red); }
+.bstat--red   .bstat-num { color: var(--red); }
+.bstat--amber { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); color: var(--amber); }
+.bstat--amber .bstat-num { color: var(--amber); }
+.bstat--green { border-color: rgba(34,197,94,0.3);  background: rgba(34,197,94,0.07);  color: var(--green); }
+.bstat--green .bstat-num { color: var(--green); }
+.banner-arrow { color: var(--txt3); padding: 0 16px; flex-shrink: 0; }
+
+/* Extra type badges */
+.type-date  { background: rgba(167,139,250,0.12); color: var(--purple); }
+.type-email { background: rgba(251,146,60,0.12);  color: var(--orange); }
+.type-id    { background: rgba(34,197,94,0.12);   color: var(--green); }
+
+/* Bad email cell */
+.cell-bad-email { color: var(--orange); font-weight: 600; }
+
 /* ── ANIMATIONS ───────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
