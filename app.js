@@ -43,6 +43,7 @@ const PENALTIES = {
 
 let rawData = [], cleanData = [], headers = [];
 let rawProfile = {}, cleanProfile = {};
+let currentFilename = 'cleanflow_output.csv';
 let rawIssues = {}, rawDupes = {};
 let currentView = 'before', currentPage = 1;
 const PER_PAGE = 15;
@@ -744,6 +745,7 @@ function setLoadingProgress(pct, title, sub, step) {
 }
 
 async function loadData(rows, filename = 'dataset.csv') {
+  currentFilename = filename;
   if (!rows || !rows.length) { showToast('No data found in file.', 'error'); return; }
 
   // 1. Hide upload, show loading
@@ -849,7 +851,12 @@ function exportData(data, filename) {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnSample').onclick       = () => loadData(generateSample(), 'sample_dataset.csv');
   document.getElementById('btnRunPipeline').onclick  = runPipeline;
-  document.getElementById('btnExport').onclick       = () => exportData(cleanData, 'cleanflow_output.csv');
+  
+  document.getElementById('btnExport').onclick = () => {
+    // e.g. "my_data.csv" -> "my_data_cleaned.csv"
+    const outName = currentFilename.replace(/\.csv$/i, '') + '_cleaned.csv';
+    exportData(cleanData, outName);
+  };
 
   const handleFile = file => {
     if (!file) return;
