@@ -1,0 +1,121 @@
+customer_id,name,email,age,city,department,salary,satisfaction,signup_date
+1001,User 011,user1@example.com,38.0,London,Support,54489.0,8.0,2025-01-01
+1002,User 093,user2@example.com,49.0,Mumbai,Support,104307.0,2.2,2025-01-02
+1003,  Alice  ,user3@example.com,48.0,New York,Marketing,51047.0,5.8,2025-01-03
+1004,User 053,user4@example.com,40.0,Sydney,Support,101307.0,5.6,2025-01-04
+1005,User 052,user5@example.com,,Sydney,Sales,70596.0,8.7,2025-01-05
+1006,User 104,user6@example.com,44.0,New York,HR,49402.0,5.2,2025-01-06
+1007,User 011,user7@example.com,21.0,mumbai,Engineering,58750.0,4.5,2025-01-07
+1008,User 084,user8@example.com,53.0,Berlin,Marketing,76830.0,6.8,2025-01-08
+1009,User 025,user9@example.com,45.0, London ,Sales,98393.0,3.4,2025-01-09
+1010,User 012,user10@example.com,47.0,New York,Finance,83753.0,2.3,2025-01-10
+1011,User 064,user11@example.com,44.0,London,Engineering,113856.0,5.3,2025-01-11
+1012,Henry,user12@example.com,44.0,Berlin,HR,107831.0,4.8,2025-01-12
+1013,User 089,user13@example.com,22.0,NEW YORK,Engineering,97308.0,3.1,2025-01-13
+1014,User 092,user14@example.com,44.0,Toronto,Engineering,83485.0,4.3,2025-01-14
+1015,User 087,user15example.com,55.0,Sydney,Support,54666.0,4.3,2025-01-15
+1016,User 095,user16@example.com,32.0,London, Engineering,65956.0,3.9,2025-01-16
+1017,User 062,user17@example.com,46.0,Sydney,Finance,38938.0,4.4,2025-01-17
+1018,User 016,user18@example.com,19.0,New York,Finance,,7.2,2025-01-18
+1019,User 101,user19@example.com,34.0,London,Engineering,113235.0,3.7,2025-01-19
+1020,User 055,user20@example.com,38.0,Mumbai,Marketing,67181.0,9.5,2025-01-20
+1021,User 061,user21@example.com,64.0,Paris,Sales,38463.0,9.2,2025-01-21
+1022,User 045,user22@example.com,28.0,London,Support,87977.0,5.3,2025-01-22
+1023,User 022,user23@example.com,30.0,Toronto,sales,116560.0,4.0,2025-01-23
+1024,Bob,user24@example.com,37.0,Dubai,Marketing,107809.0,5.8,2025-01-24
+1025,User 094,user25@example.com,64.0,Dubai,Sales,53215.0,8.6,2025-01-25
+1026,User 078,user26@example.com,3.0,Mumbai,Sales,69758.0,6.9,2025-01-26
+1027,User 049,user27@example.com,19.0,Berlin,Sales,76853.0,8.2,2025-01-27
+1028,User 099, user28@example.com ,28.0,Toronto,Finance,50801.0,5.8,2025-01-28
+1029,User 066,user29@example.com,56.0,Mumbai,Support,52719.0,6.7,2025-01-29
+1030,User 054,user30@example.com,20.0,Mumbai,Sales,49772.0,3.6,2025-01-30
+1031,User 055,user31@example.com,58.0,Toronto,Finance,119501.0,7.6,2025-01-31
+1032,User 028,user32@example.com,31.0,,Marketing,96633.0,2.8,2025-02-01
+1033,User 012,user33@example.com,61.0,London,Engineering,105358.0,7.3,2025-02-02
+1034,User 067,user34@example.com,31.0,Dubai,HR,103124.0,8.7,2025-02-03
+1035,User 107,user35@example.com,38.0,Berlin,Finance,116241.0,2.2,2025-02-04
+1036,User 008,user36@example.com,49.0,Berlin,MARKETING,37685.0,6.5,2025-02-05
+1037,User 103,user37@example.com,23.0,Berlin,Sales,109110.0,1.9,2025-02-06
+1038,User 100,user38@example.com,44.0,Paris,Marketing,34123.0,7.5,2025-02-07
+1039,User 034,user39@example.com,41.0,New York,Marketing,71738.0,1.8,2025-02-08
+1040, Bob   ,user40@example.com,54.0,New York,Marketing,82687.0,9.4,2025-02-09
+1041,User 020,user41@example.com,64.0,Toronto,Support,60923.0,2.2,2025-02-10
+1042,User 091,user42@example.com,49.0,Berlin,Finance,41447.0,9.6,2025-02-11
+1043,User 085,user43@example.com,37.0,Sydney,Marketing,45691.0,8.2,2025-02-12
+1044,User 043,user44@example.com,37.0,Berlin,Support,103869.0,6.3,2025-02-13
+1045,User 009,,37.0,Berlin,Engineering,57322.0,8.0,2025-02-14
+1046,Grace,user46@example.com,56.0,Dubai,HR,56550.0,8.2,2025-02-15
+1047,User 054,user47@example.com,33.0,London,Engineering,112949.0,9.5,2025-02-16
+1048,User 108,user48@example.com,25.0,Mumbai,Sales,41236.0,3.3,2025-02-17
+1049,User 082,user49@example.com,33.0,Mumbai,Support,112204.0,6.3,2025-02-18
+1050,User 094,user50@example.com,19.0,Berlin,finance,112729.0,1.9,2025-02-19
+1051,User 092,user51@example.com,unknown,Paris,Marketing,83067.0,6.5,2025-02-20
+1052,User 024,user52@example.com,22.0,Toronto,Marketing,43228.0,2.5,2025-02-21
+1053,User 044,user53@example.com,54.0,Dubai,Marketing,42339.0,6.1,2025-02-22
+1054,User 057,missing-domain@,51.0,Toronto,Sales,54194.0,6.2,2025-02-23
+1055,User 060,user55@example.com,50.0,Mumbai,Sales,81122.0,5.2,2025-02-24
+1056,User 006,user56@example.com,39.0,Mumbai,Finance,42132.0,5.7,2025-02-25
+1057,User 066,user57@example.com,51.0,Paris,Support,69920.0,7.9,2025-02-26
+1058,User 019,user58@example.com,25.0,Berlin,Sales,38625.0,8.2,2025-02-27
+1059,User 090,user59@example.com,60.0,Toronto,Marketing,77706.0,,2025-02-28
+1060,User 082,user60@example.com,41.0,New York,HR,29945.0,6.4,2025-03-01
+1061,Alice,user61@example.com,62.0,Toronto,Support,93231.0,9.4,2025-03-02
+1062,User 090,user62@example.com,25.0,Paris,Finance,33096.0,2.1,2025-03-03
+1063,User 044,user63@example.com,41.0,New York,Finance,45923.0,2.1,2025-03-04
+1064,Grace,user64@example.com,50.0,Dubai,HR,44067.0,1.8,2025-03-05
+1065,User 050,user65@example.com,142.0,Mumbai,Engineering,104451.0,6.9,2025-03-06
+1066,User 040,user66@example.com,38.0,London,Marketing,32911.0,4.8,2025-03-07
+1067,User 109,user67@example.com,25.0,Toronto,Support,67491.0,8.0,2025-03-08
+1068,User 045,user68@example.com,35.0,Mumbai,Finance,N/A,7.0,2025-03-09
+1069,User 010,user69@example.com,29.0,Toronto,Sales,75471.0,4.0,2025-03-10
+1070,User 057,user70@example.com,32.0,New York,Finance,90625.0,9.1,2025-03-11
+1071,User 096,user71@example.com,50.0,Sydney,Sales,101885.0,7.9,2025-03-12
+1072,User 023,user72@example.com,47.0,Sydney,Finance,64214.0,3.4,2025-03-13
+1073,User 056,user73@example.com,46.0,New York,,104196.0,4.3,2025-03-14
+1074,User 016,user74@example.com,35.0,Toronto,Sales,57255.0,3.8,2025-03-15
+1075,User 083,user75@example.com,63.0,London,Engineering,118566.0,2.4,2025-03-16
+1076,User 058,user76@example.com,22.0,Sydney,Sales,74416.0,2.3,2025-03-17
+1077,User 040,user77@example.com,34.0,Sydney,HR,2500000.0,9.4,2025-03-18
+1078,User 028,user78@example.com,23.0,Sydney,Support,108500.0,4.9,2025-03-19
+1079,User 068,user79@example.com,33.0,Dubai,Sales,100923.0,4.4,2025-03-20
+1080,User 081,user80@example.com,63.0,Paris,Engineering,106304.0,7.6,2025-03-21
+1081,Charlie,user81@example.com,35.0,Toronto,Support,77359.0,6.0,2025-03-22
+1082,User 053,user82@example.com,60.0,New York,Marketing,31999.0,9.4,2025-03-23
+1083,User 020,user83@example.com,41.0,Mumbai,Sales,73363.0,not rated,2025-03-24
+1084,User 100,user84@example.com,50.0,Dubai,Engineering,44697.0,5.3,2025-03-25
+1085,User 076,user85@example.com,39.0,Dubai,HR,109798.0,4.4,2025-03-26
+1086,User 085,user86@example.com,30.0,London,HR,49780.0,9.9,2025-03-27
+1087,User 012,user87@example.com,53.0,London,Marketing,48982.0,7.5,2025-03-28
+1088,User 038,user88@example.com,63.0,New York,Support,50943.0,9.6,2025-03-29
+1089,User 093,user89@example.com,30.0,London,HR,-5000.0,2.1,2025-03-30
+1090,User 100,user90@example.com,54.0,Mumbai,Marketing,80553.0,8.7,2025-03-31
+1091,User 053,user91@example.com,30.0,Mumbai,Support,115293.0,6.7,2025-04-01
+1092,,user92@example.com,51.0,Toronto,Support,66296.0,2.1,2025-04-02
+1093,User 102,user93@example.com,55.0,Toronto,Engineering,53969.0,6.3,2025-04-03
+1094,User 047,user94@example.com,39.0,Paris,Sales,32531.0,7.2,2025-04-04
+1095,User 108,user95@example.com,52.0,Berlin,HR,28650.0,1.1,2025-04-05
+1096,User 035,user96@example.com,30.0,Paris,HR,62372.0,5.1,2025-04-06
+1097,User 029,user97@example.com,21.0,Dubai,Sales,113175.0,8.4,2025-04-07
+1098,User 082,bad-email,22.0,Toronto,HR,76185.0,3.7,2025-04-08
+1099,User 077,user99@example.com,39.0,London,Support,110206.0,5.1,2025-04-09
+1100,User 017,user100@example.com,60.0,Dubai,Sales,37353.0,5.0,2025-04-10
+1101,User 100,user101@example.com,23.0,Sydney,Finance,36585.0,3.7,2025-04-11
+1102,User 024,user102@example.com,39.0,Toronto,Sales,104678.0,9.3,2025-04-12
+1103,User 097,user103@example.com,51.0,Mumbai,Finance,37820.0,8.0,2025-04-13
+1104,User 001,user104@example.com,27.0,Mumbai,Engineering,32780.0,99.0,2025-04-14
+1105,User 096,user105@example.com,51.0,Dubai,Sales,65176.0,10.0,2025-04-15
+1106,User 095,user106@example.com,32.0,Toronto,Support,113085.0,8.9,2025-04-16
+1107,User 094,user107@example.com,56.0,Dubai,Sales,91423.0,3.6,2025-04-17
+1108,User 080,user108@example.com,45.0,Dubai,HR,37118.0,8.5,2025-04-18
+1109,User 057,user109@example.com,43.0,London,Marketing,105016.0,2.0,
+1110,User 085,user110@example.com,26.0,London,Support,105608.0,10.0,2025-04-20
+1111,User 034,user111@example.com,39.0,Mumbai,Finance,101664.0,7.0,2025-04-21
+1112,User 094,user112@example.com,58.0,New York,Finance,111044.0,6.9,2025-04-22
+1113,User 067,user113@example.com,18.0,Toronto,Engineering,50068.0,1.8,2025-04-23
+1114,User 056,user114@example.com,53.0,Berlin,Engineering,118120.0,9.1,2025-04-24
+1115,User 061,user115@example.com,41.0,Dubai,HR,57504.0,1.3,2025-04-25
+1116,User 069,user116@example.com,51.0,Dubai,Finance,101786.0,3.2,2025-04-26
+1117,User 005,user117@example.com,49.0,London,Support,,2.3,2025-04-27
+1118,User 017,user118@example.com,38.0,Dubai,Sales,99711.0,8.0,2025-04-28
+1021,User 061,user21@example.com,64.0,Paris,Sales,38463.0,9.2,2025-01-21
+1021,User 061,user21@example.com,64.0,Paris,Sales,38463.0,9.2,2025-01-21

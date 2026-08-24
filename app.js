@@ -10,20 +10,29 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 // Extended business rules: keyword → {min, max}
 const BUSINESS_RULES = {
-  age:            { min: 0,  max: 130 },
-  attendance_pct: { min: 0,  max: 100 },
-  attendance:     { min: 0,  max: 100 },
-  math_score:     { min: 0,  max: 100 },
-  science_score:  { min: 0,  max: 100 },
-  english_score:  { min: 0,  max: 100 },
-  score:          { min: 0,  max: 100 },
-  satisfaction:   { min: 1,  max: 10  },
-  salary:         { min: 0             },
-  fees_paid:      { min: 0             },
-  fees:           { min: 0             },
+  age:                { min: 0,  max: 130 },
+  attendance_pct:     { min: 0,  max: 100 },
+  attendance:         { min: 0,  max: 100 },
+  math_score:         { min: 0,  max: 100 },
+  science_score:      { min: 0,  max: 100 },
+  english_score:      { min: 0,  max: 100 },
+  score:              { min: 0,  max: 100 },
+  satisfaction_score: { min: 1,  max: 10  },
+  satisfaction:       { min: 1,  max: 10  },
+  salary:             { min: 0             },
+  fees_paid:          { min: 0             },
+  fees:               { min: 0             },
+  delay_minutes:      { min: 0,  max: 3000 },
+  passengers:         { min: 0,  max: 1000 },
+  checked_bags:       { min: 0,  max: 500  },
+  baggage_weight_kg:  { min: 0,  max: 20000 },
+  fuel_used_liters:   { min: 0             },
+  crew_count:         { min: 1,  max: 50   },
+  ticket_price:       { min: 0             }
 };
 
-// Quality score penalty weights
+// Global Audit Counters
+let audit = { dupes: 0, imputed: 0, normalized: 0, dateNorm: 0, ruleViols: 0, timeViols: 0, dateViols: 0, badEmails: 0 };
 const PENALTIES = {
   missing:    10,  // per % of cells that are missing
   duplicate:  10,  // flat if any exact dupes exist
@@ -65,44 +74,41 @@ function destroyChart(id) {
 function detectType(colName, values) {
   const col = colName.trim().toLowerCase();
 
-  // 1. Name-based semantic rules (highest priority)
   if (col.includes('email') || col.includes('mail')) return 'email';
 
-  // ID: must be named like an ID AND have high uniqueness — NOT catch-all
   const isIdName = col === 'id' || /^(student|user|cust|emp|employee|product|order|record)_?id$/.test(col) || col.endsWith('_id');
+  const isTimeName = col.includes('time') || col.includes('departure') || col.includes('arrival');
 
   const nonMissing = values.filter(v => !isMissing(v));
   if (!nonMissing.length) return 'string';
 
-  // Uniqueness ratio
   const uniqueVals = new Set(nonMissing.map(v => String(v).trim().toLowerCase()));
   const uniqueRatio = uniqueVals.size / nonMissing.length;
 
-  // 2. Check for date patterns
-  const dateCount = nonMissing.filter(v => /^\d{4}-\d{2}-\d{2}/.test(String(v))).length;
-  if (dateCount / nonMissing.length > 0.6) return 'date';
+  if (isTimeName) {
+    const timeCount = nonMissing.filter(v => /^\d{1,2}:\d{2}/.test(String(v).trim()) || /\d{1,2}\s?(AM|PM|am|pm)/.test(String(v).trim())).length;
+    if (timeCount / nonMissing.length > 0.5) return 'time';
+  }
 
-  // 3. Numeric: only if > 80% parse cleanly AND not categorical-looking
-  //    KEY FIX: check if values contain mixed alpha chars like "10-A", "11-B"
+  const dateCount = nonMissing.filter(v => {
+    const s = String(v).trim();
+    return /^\d{4}-\d{2}-\d{2}/.test(s) || /^\d{2}[\/\-]\d{2}[\/\-]\d{4}/.test(s) || /^[A-Za-z]{3} \d{1,2}, \d{4}/.test(s);
+  }).length;
+  if (col.includes('date') || dateCount / nonMissing.length > 0.6) return 'date';
+
   const hasAlphaPattern = nonMissing.some(v => /\d+[-\/][A-Za-z]/.test(String(v)));
   if (hasAlphaPattern) return 'categorical';
 
   const numericVals = nonMissing.filter(v => {
-    const cleaned = String(v).replace(/[$,₹€£]/g, '').trim();
+    // Strip everything except digits, minus, and period
+    const cleaned = String(v).replace(/[^\d.-]/g, '').trim();
     return cleaned !== '' && !isNaN(Number(cleaned));
   });
   const numRatio = numericVals.length / nonMissing.length;
 
-  // 4. ID: numeric-looking + id-named + very high uniqueness
   if (isIdName && numRatio > 0.8 && uniqueRatio > 0.85) return 'id';
-
-  // 5. Numeric (regular)
   if (numRatio > 0.8) return 'numeric';
-
-  // 6. Categorical: low uniqueness string
   if (uniqueRatio < 0.15 && nonMissing.length > 5) return 'categorical';
-
-  // 7. ID catch: purely alpha/string identifiers with id-like name + high uniqueness
   if (isIdName && uniqueRatio > 0.9) return 'id';
 
   return 'string';
@@ -122,9 +128,8 @@ function profileDataset(data) {
     const type = detectType(col, vals);
     const missing = vals.filter(v => isMissing(v)).length;
 
-    // Invalid numerics: non-missing cells that can't be parsed as number, in a numeric column
     const invalidNumeric = type === 'numeric'
-      ? vals.filter(v => !isMissing(v) && isNaN(Number(String(v).replace(/[$,₹€£]/g,'').trim()))).length
+      ? vals.filter(v => !isMissing(v) && isNaN(Number(String(v).replace(/[^\d.-]/g,'').trim()))).length
       : 0;
 
     const nonMissing = vals.filter(v => !isMissing(v));
@@ -134,7 +139,7 @@ function profileDataset(data) {
 
     if (type === 'numeric') {
       const nums = nonMissing
-        .map(v => Number(String(v).replace(/[$,₹€£]/g,'').trim()))
+        .map(v => Number(String(v).replace(/[^\d.-]/g,'').trim()))
         .filter(n => !isNaN(n));
 
       if (nums.length) {
@@ -143,13 +148,11 @@ function profileDataset(data) {
         mean = nums.reduce((s,n) => s+n, 0) / nums.length;
         median = sorted[Math.floor(sorted.length/2)];
 
-        // IQR outliers
         const q1 = sorted[Math.floor(sorted.length*0.25)];
         const q3 = sorted[Math.floor(sorted.length*0.75)];
         const iqr = q3 - q1;
         if (iqr > 0) iqrOutlierVals = nums.filter(n => n < q1-1.5*iqr || n > q3+1.5*iqr);
 
-        // Business rule violations
         const colKey = Object.keys(BUSINESS_RULES).find(k => col.toLowerCase().includes(k));
         if (colKey) {
           const rule = BUSINESS_RULES[colKey];
@@ -293,44 +296,158 @@ async function runPipeline() {
   const p1 = profileDataset(data);
   setStep('step-profile', 'complete', `${headers.length} cols`);
 
-  // Step 2: Impute missing values
-  setStep('step-missing', 'active', 'Imputing…'); await sleep(400);
-  let missingFixed = 0;
+  // Step 2: Semantic Cleaning & Imputation
+  setStep('step-missing', 'active', 'Cleaning & Imputing…'); await sleep(400);
+  audit = { dupes: 0, imputed: 0, normalized: 0, dateNorm: 0, ruleViols: 0, timeViols: 0, dateViols: 0, badEmails: 0 };
+  
+  data.forEach(r => { r.__status = 'clean'; r.__issues = []; });
+
   headers.forEach(c => {
+    const t = p1[c].type;
     data.forEach(r => {
-      const isNum = p1[c].type === 'numeric';
-      const needsFix = isMissing(r[c]) || (isNum && isNaN(Number(String(r[c]).replace(/[$,₹€£]/g,'').trim())));
-      if (needsFix) {
-        r[c] = isNum && p1[c].mean != null ? Number(p1[c].mean.toFixed(2)) : '';
-        r.__fixed = true; missingFixed++;
+      const v = r[c];
+      const isMiss = isMissing(v);
+      const strVal = String(v ?? '').trim();
+
+      if (isMiss) {
+        r[c] = t === 'numeric' && p1[c].mean != null ? Number(p1[c].mean.toFixed(2)) : '';
+        if (r.__status === 'clean') r.__status = 'imputed';
+        r.__issues.push(`imputed ${c}`);
+        audit.imputed++;
+        return;
+      }
+
+      // ── NUMERIC STRIP ──
+      if (t === 'numeric') {
+        const cleaned = strVal.replace(/[^\d.-]/g, '');
+        if (isNaN(Number(cleaned)) || cleaned === '') {
+          r[c] = p1[c].mean != null ? Number(p1[c].mean.toFixed(2)) : '';
+          if (r.__status === 'clean') r.__status = 'imputed';
+          r.__issues.push(`invalid_num_imputed ${c}`);
+          audit.imputed++;
+        } else if (cleaned !== strVal) {
+          r[c] = Number(cleaned);
+          if (r.__status === 'clean') r.__status = 'corrected';
+          r.__issues.push(`numeric_strip ${c}`);
+          audit.normalized++;
+        } else {
+          r[c] = Number(cleaned);
+        }
+      }
+      
+      // ── CATEGORICAL NORM ──
+      else if (t === 'categorical') {
+        let norm = strVal;
+        if (c.includes('origin') || c.includes('destination') || c.includes('code')) norm = norm.toUpperCase();
+        else if (norm.length > 1) {
+          // basic title case for categories
+          norm = norm.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        }
+        if (norm !== String(v)) {
+          r[c] = norm;
+          if (r.__status === 'clean') r.__status = 'corrected';
+          r.__issues.push(`case_normalized ${c}`);
+          audit.normalized++;
+        }
+      }
+      
+      // ── DATE PARSING ──
+      else if (t === 'date') {
+        let dateObj = new Date(strVal);
+        if (isNaN(dateObj.getTime())) {
+          // try DD/MM/YYYY
+          const m = strVal.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+          if (m) dateObj = new Date(`${m[3]}-${m[2]}-${m[1]}`);
+        }
+        if (!isNaN(dateObj.getTime())) {
+          const iso = dateObj.toISOString().split('T')[0];
+          if (iso !== String(v)) {
+            r[c] = iso;
+            if (r.__status === 'clean') r.__status = 'corrected';
+            r.__issues.push(`date_normalized ${c}`);
+            audit.dateNorm++;
+          }
+        } else {
+          r.__status = 'rejected';
+          r.__issues.push(`invalid_date ${c}`);
+          audit.dateViols++;
+        }
+      }
+
+      // ── TIME PARSING ──
+      else if (t === 'time') {
+        let timeStr = strVal.toUpperCase();
+        let m = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+        let hh, mm;
+        if (m) { hh = parseInt(m[1]); mm = parseInt(m[2]); }
+        else {
+          m = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s?(AM|PM)$/);
+          if (m) {
+            hh = parseInt(m[1]); mm = parseInt(m[2] || '0');
+            if (m[3] === 'PM' && hh < 12) hh += 12;
+            if (m[3] === 'AM' && hh === 12) hh = 0;
+          }
+        }
+
+        if (hh !== undefined && mm !== undefined && hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+          const pad = n => String(n).padStart(2, '0');
+          const norm = `${pad(hh)}:${pad(mm)}`;
+          if (norm !== String(v)) {
+            r[c] = norm;
+            if (r.__status === 'clean') r.__status = 'corrected';
+            r.__issues.push(`time_normalized ${c}`);
+            audit.normalized++;
+          }
+        } else {
+          r.__status = 'rejected';
+          r.__issues.push(`invalid_time ${c}`);
+          audit.timeViols++;
+        }
       }
     });
   });
-  setStep('step-missing', 'complete', `${missingFixed} cells fixed`);
+  setStep('step-missing', 'complete', `${audit.imputed} imputed, ${audit.normalized + audit.dateNorm} normalized`);
 
   // Step 3: Deduplicate
   setStep('step-dupes', 'active', 'Deduplicating…'); await sleep(300);
   const beforeCount = data.length;
   const seenRows = new Set();
   data = data.filter(r => {
+    // only use the actual columns for dedupe hash, ignore meta fields
     const k = headers.map(h => String(r[h]??'').trim().toLowerCase()).join('\x00');
     if (seenRows.has(k)) return false; seenRows.add(k); return true;
   });
-  removedDupes = beforeCount - data.length;
-  setStep('step-dupes', 'complete', `${removedDupes} removed`);
+  audit.dupes = beforeCount - data.length;
+  setStep('step-dupes', 'complete', `${audit.dupes} removed`);
 
   // Step 4: Validate / flag outliers
-  setStep('step-outliers', 'active', 'Validating ranges…'); await sleep(350);
+  setStep('step-outliers', 'active', 'Validating ranges & rules…'); await sleep(350);
   const p2 = profileDataset(data);
   let flagged = 0;
   data.forEach(r => {
     headers.forEach(c => {
-      if (p2[c].type !== 'numeric') return;
-      const n = Number(String(r[c]??'').replace(/[$,₹€£]/g,'').trim());
-      if (isNaN(n)) return;
-      const isIQR  = p2[c].iqrOutlierVals?.includes(n);
-      const isRule = p2[c].ruleViolationVals?.includes(n);
-      if (isIQR || isRule) { r.__outlier = r.__outlier || {}; r.__outlier[c] = true; flagged++; }
+      // Check emails
+      if (p2[c].type === 'email' && r[c] !== '' && !EMAIL_RE.test(String(r[c]))) {
+        if (r.__status !== 'rejected') r.__status = 'flagged';
+        r.__issues.push(`bad_email ${c}`);
+        audit.badEmails++;
+        flagged++;
+      }
+
+      // Check numeric bounds
+      if (p2[c].type === 'numeric') {
+        const n = Number(String(r[c]??'').replace(/[^\d.-]/g,'').trim());
+        if (isNaN(n)) return;
+        const isIQR  = p2[c].iqrOutlierVals?.includes(n);
+        const isRule = p2[c].ruleViolationVals?.includes(n);
+        if (isIQR || isRule) { 
+          if (r.__status !== 'rejected') r.__status = 'flagged';
+          r.__outlier = r.__outlier || {}; r.__outlier[c] = true; 
+          r.__issues.push(`outlier_or_rule ${c}`);
+          if (isRule) audit.ruleViols++;
+          flagged++; 
+        }
+      }
     });
   });
   setStep('step-outliers', 'complete', `${flagged} flagged`);
@@ -363,54 +480,59 @@ function buildInsights(rawIss, cleanIss, missingFixed, dupesRemoved, outliersFla
   const grid  = document.getElementById('insightsGrid');
   panel.classList.remove('hidden');
 
-  const remainingMissing = cleanIss.missing;
-  const remainingEmails  = cleanIss.badEmails;
-  const remainingOutliers = cleanIss.outliers;
-
   const cards = [];
 
   // ── RESOLVED cards ──
-  if (missingFixed > 0) {
-    cards.push({ type:'resolved', count: missingFixed, title: 'Missing cells imputed',
-      desc: `${missingFixed} blank or invalid cells were filled automatically using the column mean for numeric fields, and left as empty string for text fields.` });
+  if (audit.dupes > 0) {
+    cards.push({ type:'resolved', count: audit.dupes, title: 'Duplicate rows removed',
+      desc: `${audit.dupes} exact duplicate records were identified and eliminated. The dataset was reduced from ${rawData.length} → ${cleanData.length} rows.` });
   }
 
-  if (dupesRemoved > 0) {
-    cards.push({ type:'resolved', count: dupesRemoved, title: 'Duplicate rows removed',
-      desc: `${dupesRemoved} exact duplicate records were identified and eliminated. The dataset was reduced from ${rawData.length} → ${cleanData.length} rows.` });
+  if (audit.imputed > 0) {
+    cards.push({ type:'resolved', count: audit.imputed, title: 'Missing cells imputed',
+      desc: `${audit.imputed} blank or invalid cells were filled automatically using the column mean for numeric fields, and left as empty string for text fields.` });
   }
 
-  // ── FLAGGED cards (partially resolved) ──
-  if (outliersFlagged > 0) {
-    cards.push({ type:'flagged', count: outliersFlagged, title: 'Outliers flagged (not removed)',
-      desc: `${outliersFlagged} values exceeded statistical bounds (IQR) or violated business rules (e.g. age > 130, score > 100, fees < 0). They are highlighted in the data table but kept intact — removing them requires your confirmation.` });
+  if (audit.normalized > 0) {
+    cards.push({ type:'resolved', count: audit.normalized, title: 'Values normalized',
+      desc: `${audit.normalized} values were structurally corrected (e.g. whitespace trimmed, case normalized for categories, numeric currency stripped, or time converted to 24h).` });
   }
 
-  if (remainingEmails > 0) {
-    cards.push({ type:'flagged', count: remainingEmails, title: 'Invalid emails flagged',
-      desc: `${remainingEmails} email addresses failed format validation. CleanFlow cannot auto-correct email addresses since the correct value is unknown. These are highlighted in red in the Raw Payload view.` });
+  if (audit.dateNorm > 0) {
+    cards.push({ type:'resolved', count: audit.dateNorm, title: 'Dates standardized',
+      desc: `${audit.dateNorm} dates from various formats (MM/DD/YYYY, DD-MM-YYYY, etc) were converted to ISO 8601 (YYYY-MM-DD).` });
   }
 
-  // ── MANUAL / REMAINING cards ──
-  if (remainingMissing > 0) {
-    cards.push({ type:'manual', count: remainingMissing, title: 'Missing values remain',
-      desc: `${remainingMissing} cells could not be imputed. This usually happens in text columns (e.g. names, categories) where a statistical mean doesn't apply. Review these rows manually or drop them.` });
+  // ── FLAGGED / MANUAL cards ──
+  if (audit.ruleViols > 0) {
+    cards.push({ type:'flagged', count: audit.ruleViols, title: 'Range violations flagged',
+      desc: `${audit.ruleViols} values broke defined domain limits (e.g. delays < 0, percentages > 100). They are highlighted in the data table but kept intact.` });
   }
 
-  if (cleanIss.ruleViols > 0) {
-    cards.push({ type:'manual', count: cleanIss.ruleViols, title: 'Business rule violations',
-      desc: `${cleanIss.ruleViols} values break defined domain rules (e.g. attendance > 100%, negative fees). These are preserved as-is — correct the source data or adjust the business rules to exclude known edge cases.` });
+  const iqrOutliers = cleanIss.outliers - cleanIss.ruleViols;
+  if (iqrOutliers > 0) {
+    cards.push({ type:'flagged', count: iqrOutliers, title: 'Statistical outliers flagged',
+      desc: `${iqrOutliers} numeric values exceeded statistical bounds (IQR). They may be valid anomalies or data entry errors.` });
+  }
+
+  if (audit.timeViols > 0 || audit.dateViols > 0) {
+    cards.push({ type:'manual', count: audit.timeViols + audit.dateViols, title: 'Invalid Dates/Times',
+      desc: `${audit.timeViols + audit.dateViols} impossible dates (e.g. 31/02/2026) or times (e.g. 25:72) were found. CleanFlow rejected these as unparseable.` });
+  }
+
+  if (audit.badEmails > 0) {
+    cards.push({ type:'manual', count: audit.badEmails, title: 'Invalid emails',
+      desc: `${audit.badEmails} email addresses failed format validation. CleanFlow cannot auto-correct these.` });
   }
 
   // ── INFO cards ──
-  const totalResolved = missingFixed + dupesRemoved;
-  const totalRemaining = cleanIss.total;
-  if (totalRemaining === 0) {
-    cards.push({ type:'info', count: '✓', title: 'All issues resolved',
-      desc: `The pipeline successfully resolved all ${rawIss.total} detected issues. Your dataset is clean and ready for export.` });
+  const reviewCount = cleanData.filter(r => r.__status === 'flagged' || r.__status === 'rejected').length;
+  if (reviewCount === 0) {
+    cards.push({ type:'info', count: '✓', title: 'All rows processed securely',
+      desc: `The pipeline successfully transformed the data without any remaining anomalies. ${cleanData.length} rows ready for export.` });
   } else {
-    cards.push({ type:'info', count: totalRemaining, title: 'Issues requiring manual review',
-      desc: `${totalRemaining} issues could not be auto-resolved. Outliers and rule violations are flagged in the data table. Invalid emails need source correction. Review the Schema Introspection section below for column-level detail.` });
+    cards.push({ type:'info', count: reviewCount, title: 'Rows require review',
+      desc: `${reviewCount} rows contain flagged outliers or unparseable inputs. Review the table below.` });
   }
 
   grid.innerHTML = cards.map(c => `
@@ -567,19 +689,40 @@ function renderTable() {
   const pageRows = tableData.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
 
   document.getElementById('tableHead').innerHTML =
-    `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+    `<tr>
+      ${currentView === 'after' ? `<th style="width: 100px;">Status</th>` : ''}
+      ${headers.map(h => `<th>${h}</th>`).join('')}
+    </tr>`;
 
-  document.getElementById('tableBody').innerHTML = pageRows.map(r => `<tr>${
-    headers.map(c => {
+  document.getElementById('tableBody').innerHTML = pageRows.map(r => {
+    let statusBadge = '';
+    if (currentView === 'after') {
+      const s = r.__status || 'clean';
+      const colors = {
+        clean: 'var(--acc-green)', imputed: 'var(--acc-blue)',
+        corrected: 'var(--acc-blue)', flagged: 'var(--acc-amber)', rejected: 'var(--acc-red)'
+      };
+      statusBadge = `<td><span style="font-size:10px; font-weight:600; text-transform:uppercase; padding:2px 6px; border-radius:4px; border:1px solid ${colors[s]}; color:${colors[s]}">${s}</span></td>`;
+    }
+
+    const cells = headers.map(c => {
       const v = r[c];
       const missing = isMissing(v);
       let cls = '';
       if (missing) cls = 'cell-null';
-      else if (r.__outlier?.[c]) cls = 'cell-outlier';
+      else if (currentView === 'after' && r.__issues?.some(i => i.endsWith(` ${c}`))) {
+        const issue = r.__issues.find(i => i.endsWith(` ${c}`));
+        if (issue.startsWith('imputed') || issue.includes('normalized') || issue.includes('strip')) cls = 'cell-fixed';
+        else if (issue.startsWith('outlier') || issue.startsWith('bad_email')) cls = 'cell-outlier';
+        else if (issue.startsWith('invalid')) cls = 'cell-bad';
+      }
       else if (currentView === 'before' && rawProfile[c]?.type === 'email' && !EMAIL_RE.test(String(v))) cls = 'cell-bad';
+      
       return `<td class="${cls}">${missing ? '∅ null' : v}</td>`;
-    }).join('')
-  }</tr>`).join('');
+    }).join('');
+
+    return `<tr>${statusBadge}${cells}</tr>`;
+  }).join('');
 
   document.getElementById('rowsInfo').textContent = `Page ${currentPage} of ${pages} · ${total} rows`;
   document.getElementById('pagination').innerHTML = `
