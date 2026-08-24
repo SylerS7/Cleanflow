@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CleanFlow | Observability Dashboard</title>
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- PapaParse -->
@@ -57,26 +57,26 @@
       <!-- KPI Metrics -->
       <section class="kpi-grid">
         <div class="kpi-card">
-          <p class="kpi-label">QUALITY SCORE</p>
+          <p class="kpi-label" id="lblScore">QUALITY SCORE</p>
           <div style="display:flex; justify-content:space-between; align-items:baseline;">
             <h3 class="kpi-value" id="scoreNum">--</h3>
             <span class="kpi-trend trend-neutral" id="scoreGrade">--</span>
           </div>
         </div>
         <div class="kpi-card">
-          <p class="kpi-label">TOTAL ROWS</p>
+          <p class="kpi-label" id="lblRows">RAW ROWS</p>
           <h3 class="kpi-value" id="kpiRows">--</h3>
-          <p class="kpi-sub" id="kpiCols">-- columns</p>
+          <p class="kpi-sub" id="kpiCols">-- attributes</p>
         </div>
         <div class="kpi-card">
-          <p class="kpi-label">MISSING CELLS</p>
-          <h3 class="kpi-value" id="kpiMissing">--</h3>
-          <p class="kpi-sub" id="kpiMissingPct">--</p>
+          <p class="kpi-label" id="lblIssues">ISSUES FOUND</p>
+          <h3 class="kpi-value" id="kpiIssues">--</h3>
+          <p class="kpi-sub" id="kpiIssuesSub">Needs cleaning</p>
         </div>
         <div class="kpi-card">
           <p class="kpi-label">DUPLICATES</p>
           <h3 class="kpi-value" id="kpiDupes">--</h3>
-          <p class="kpi-sub" id="kpiDupesPct">--</p>
+          <p class="kpi-sub" id="kpiDupesSub">--</p>
         </div>
       </section>
 
@@ -198,6 +198,6 @@
   <div id="toast" class="toast"></div>
 </div>
 
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
