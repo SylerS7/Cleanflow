@@ -268,8 +268,8 @@ function updateCleanKPIs(score, rawIss, cleanIss, cleanRows) {
   const resolved = rawIss.total - cleanIss.total;
   document.getElementById('kpiIssues').textContent  = fmtN(resolved);
   document.getElementById('kpiIssuesSub').textContent = cleanIss.total === 0 ? 'All issues resolved ✓' : `${cleanIss.total} remaining`;
-  document.getElementById('kpiDupes').textContent   = fmtN(removedDupes);
-  document.getElementById('kpiDupesSub').textContent = removedDupes > 0 ? `${fmtN(cleanRows)} unique records` : 'No duplicates removed';
+  document.getElementById('kpiDupes').textContent   = fmtN(audit.dupes);
+  document.getElementById('kpiDupesSub').textContent = audit.dupes > 0 ? `${fmtN(cleanRows)} unique records` : 'No duplicates removed';
 }
 
 function setStep(id, state, detail) {
@@ -463,7 +463,7 @@ async function runPipeline() {
   updateCleanKPIs(cleanScore, rawIssues, cleanIssues, cleanData.length);
   buildPostCharts(rawProfile, cleanProfile);
   buildProfilerCards(cleanProfile);
-  buildInsights(rawIssues, cleanIssues, missingFixed, removedDupes, flagged);
+  buildInsights(rawIssues, cleanIssues, audit.imputed, audit.dupes, flagged);
 
   document.getElementById('btnRunPipeline').disabled = false;
   document.getElementById('btnExport').disabled = false;
@@ -471,7 +471,7 @@ async function runPipeline() {
 
   pipelineRan = true;
   switchTab('after');
-  showToast(`✓ Pipeline complete. ${missingFixed} cells fixed · ${removedDupes} dupes removed · ${flagged} outliers flagged.`, 'success');
+  showToast(`✓ Pipeline complete. ${audit.imputed} cells fixed · ${audit.dupes} dupes removed · ${flagged} flagged.`, 'success');
 }
 
 // ── INSIGHTS ──────────────────────────────────────────────
