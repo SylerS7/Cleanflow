@@ -347,9 +347,20 @@ function renderTable() {
 }
 
 // ── Load ───────────────────────────────────────────────────
-function loadData(rows) {
+function loadData(rows, filename = 'sample_dataset.csv') {
   rawData = rows; headers = Object.keys(rows[0]); cleanData = []; pipelineRan = false;
+  
+  // Update UI state
+  document.getElementById('uploadSection').classList.add('hidden');
   document.getElementById('dashboardArea').classList.remove('hidden');
+  document.getElementById('btnUploadNew').classList.remove('hidden');
+  
+  // Set filename in topbar
+  document.getElementById('fileSeparator').classList.remove('hidden');
+  const fnEl = document.getElementById('fileName');
+  fnEl.textContent = filename;
+  fnEl.classList.remove('hidden');
+
   document.getElementById('btnRunPipeline').disabled = false;
   document.getElementById('btnExport').disabled = true; document.getElementById('btnReport').disabled = true;
   
@@ -363,7 +374,7 @@ function loadData(rows) {
   buildRawCharts(rawProfile);
   buildProfilerCards(rawProfile);
   switchTab('before');
-  showToast(`Dataset parsed: ${headers.length} cols, ${rawData.length} rows.`);
+  showToast(`Dataset loaded: ${filename}`);
 }
 
 function parseCsvText(text) {
@@ -399,21 +410,33 @@ function exportData(data, filename) {
 
 // ── Init ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btnSample').onclick = () => loadData(generateSample());
+  document.getElementById('btnSample').onclick = () => loadData(generateSample(), 'sample_dataset.csv');
   document.getElementById('btnRunPipeline').onclick = runPipeline;
   document.getElementById('btnExport').onclick = () => exportData(cleanData, 'processed_data.csv');
   
-  const fi = document.getElementById('fileInputMain');
-  fi.onchange = e => {
-    const fr = new FileReader(); fr.onload = ev => loadData(parseCsvText(ev.target.result)); fr.readAsText(e.target.files[0]);
+  const handleFile = (file) => {
+    if (!file) return;
+    const fr = new FileReader(); 
+    fr.onload = ev => loadData(parseCsvText(ev.target.result), file.name); 
+    fr.readAsText(file);
   };
+
+  const fi = document.getElementById('fileInputMain');
+  fi.onchange = e => handleFile(e.target.files[0]);
   document.getElementById('btnBrowse').onclick = () => fi.click();
+
+  const fiNew = document.getElementById('fileInputNew');
+  fiNew.onchange = e => handleFile(e.target.files[0]);
+  document.getElementById('btnUploadNew').onclick = () => fiNew.click();
+
   const dz = document.getElementById('dropZoneMain');
   dz.ondragover = e => { e.preventDefault(); dz.style.borderColor = '#ededed'; };
   dz.ondragleave = () => dz.style.borderColor = '#333';
   dz.ondrop = e => {
     e.preventDefault(); dz.style.borderColor = '#333';
-    const fr = new FileReader(); fr.onload = ev => loadData(parseCsvText(ev.target.result)); fr.readAsText(e.dataTransfer.files[0]);
+    handleFile(e.dataTransfer.files[0]);
   };
-  loadData(generateSample()); // initial payload
+  
+  // Do NOT auto-load sample data so they see the upload screen first.
+  // loadData(generateSample()); 
 });
