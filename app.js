@@ -28,7 +28,13 @@ const BUSINESS_RULES = {
   baggage_weight_kg:  { min: 0,  max: 20000 },
   fuel_used_liters:   { min: 0             },
   crew_count:         { min: 1,  max: 50   },
-  ticket_price:       { min: 0             }
+  ticket_price:       { min: 0             },
+  quantity:           { min: 1,  max: 1000 },
+  unit_price:         { min: 0,  max: 100000 },
+  discount:           { min: 0,  max: 100  },
+  delivery_days:      { min: 0,  max: 30   },
+  rating:             { min: 1,  max: 5    },
+  price:              { min: 0             }
 };
 
 // Global Audit Counters
@@ -101,16 +107,24 @@ function detectType(colName, values) {
   if (hasAlphaPattern) return 'categorical';
 
   const numericVals = nonMissing.filter(v => {
+    const s = String(v).trim();
+    // If it contains alphabetic chars (other than 'e'/'E' for scientific notation), it's NOT a number
+    if (/[a-df-zA-DF-Z]/.test(s.replace(/[$,₹€£]/g, ''))) return false;
+    
     // Strip everything except digits, minus, and period
-    const cleaned = String(v).replace(/[^\d.-]/g, '').trim();
+    const cleaned = s.replace(/[^\d.-]/g, '');
     return cleaned !== '' && !isNaN(Number(cleaned));
   });
   const numRatio = numericVals.length / nonMissing.length;
 
-  if (isIdName && numRatio > 0.8 && uniqueRatio > 0.85) return 'id';
+  if (isIdName) {
+    if (uniqueRatio > 0.85 && numRatio > 0.8) return 'id';
+    if (uniqueRatio > 0.85) return 'id';
+    return uniqueRatio < 0.2 ? 'categorical' : 'string'; // Foreign keys are string/categorical
+  }
+
   if (numRatio > 0.8) return 'numeric';
   if (uniqueRatio < 0.15 && nonMissing.length > 5) return 'categorical';
-  if (isIdName && uniqueRatio > 0.9) return 'id';
 
   return 'string';
 }
@@ -130,7 +144,12 @@ function profileDataset(data) {
     const missing = vals.filter(v => isMissing(v)).length;
 
     const invalidNumeric = type === 'numeric'
-      ? vals.filter(v => !isMissing(v) && isNaN(Number(String(v).replace(/[^\d.-]/g,'').trim()))).length
+      ? vals.filter(v => {
+          if (isMissing(v)) return false;
+          const s = String(v).trim();
+          if (/[a-df-zA-DF-Z]/.test(s.replace(/[$,₹€£]/g, ''))) return true;
+          return isNaN(Number(s.replace(/[^\d.-]/g,'')));
+        }).length
       : 0;
 
     const nonMissing = vals.filter(v => !isMissing(v));
@@ -140,7 +159,11 @@ function profileDataset(data) {
 
     if (type === 'numeric') {
       const nums = nonMissing
-        .map(v => Number(String(v).replace(/[^\d.-]/g,'').trim()))
+        .map(v => {
+          const s = String(v).trim();
+          if (/[a-df-zA-DF-Z]/.test(s.replace(/[$,₹€£]/g, ''))) return NaN;
+          return Number(s.replace(/[^\d.-]/g,''));
+        })
         .filter(n => !isNaN(n));
 
       if (nums.length) {
@@ -268,7 +291,13 @@ function updateCleanKPIs(score, rawIss, cleanIss, cleanRows) {
   document.getElementById('kpiCols').textContent    = `${headers.length} attributes`;
   const resolved = rawIss.total - cleanIss.total;
   document.getElementById('kpiIssues').textContent  = fmtN(resolved);
-  document.getElementById('kpiIssuesSub').textContent = cleanIss.total === 0 ? 'All issues resolved ✓' : `${cleanIss.total} remaining`;
+  
+  if (cleanIss.total === 0) {
+    document.getElementById('kpiIssuesSub').textContent = 'All issues resolved ✓';
+  } else {
+    document.getElementById('kpiIssuesSub').textContent = `${audit.imputed} imputed · ${cleanIss.total} require review`;
+  }
+  
   document.getElementById('kpiDupes').textContent   = fmtN(audit.dupes);
   document.getElementById('kpiDupesSub').textContent = audit.dupes > 0 ? `${fmtN(cleanRows)} unique records` : 'No duplicates removed';
 }
@@ -320,8 +349,9 @@ async function runPipeline() {
 
       // ── NUMERIC STRIP ──
       if (t === 'numeric') {
+        const hasLetters = /[a-df-zA-DF-Z]/.test(strVal.replace(/[$,₹€£]/g, ''));
         const cleaned = strVal.replace(/[^\d.-]/g, '');
-        if (isNaN(Number(cleaned)) || cleaned === '') {
+        if (hasLetters || isNaN(Number(cleaned)) || cleaned === '') {
           r[c] = p1[c].mean != null ? Number(p1[c].mean.toFixed(2)) : '';
           if (r.__status === 'clean') r.__status = 'imputed';
           r.__issues.push(`invalid_num_imputed ${c}`);
