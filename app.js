@@ -246,7 +246,7 @@ function buildRawCharts(prof) {
         label: 'Missing/Invalid',
         data: missingCols.length ? missingCols.map(h => prof[h].missing + (prof[h].invalidNumeric||0)) : [0],
         backgroundColor: '#ededed',
-        borderRadius: 4, barPercentage: 0.5
+        borderRadius: 4, barPercentage: 0.5, maxBarThickness: 40
       }]
     },
     options: {
@@ -266,8 +266,8 @@ function buildPostCharts(rProf, cProf) {
     data: {
       labels: cols.length ? cols : ['No issues'],
       datasets: [
-        { label: 'Raw', data: cols.map(h => rProf[h].missing + (rProf[h].invalidNumeric||0)), backgroundColor: '#333333', borderRadius: 4, barPercentage: 0.8 },
-        { label: 'Processed', data: cols.map(h => cProf[h]?.missing||0), backgroundColor: '#ededed', borderRadius: 4, barPercentage: 0.8 }
+        { label: 'Raw', data: cols.map(h => rProf[h].missing + (rProf[h].invalidNumeric||0)), backgroundColor: '#333333', borderRadius: 4, barPercentage: 0.8, maxBarThickness: 30 },
+        { label: 'Processed', data: cols.map(h => cProf[h]?.missing||0), backgroundColor: '#ededed', borderRadius: 4, barPercentage: 0.8, maxBarThickness: 30 }
       ]
     },
     options: {
