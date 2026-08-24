@@ -1,368 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Data Cleaning & Reporting Automation</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <link rel="stylesheet" href="style.css"/>
+  <title>CleanFlow | Observability Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
-<!-- ── SIDEBAR ─────────────────────────────────────────── -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <div class="logo">
-      <div class="logo-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M2 17l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="logo-text">CleanFlow</span>
-    </div>
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
-  </div>
+<div class="app-container">
 
-  <nav class="sidebar-nav">
-    <div class="nav-label">PIPELINE</div>
-    <a href="#upload" class="nav-item active" id="nav-upload">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Upload Data</span>
-    </a>
-    <a href="#quality" class="nav-item" id="nav-quality">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Quality Analysis</span>
-    </a>
-    <a href="#pipeline" class="nav-item" id="nav-pipeline">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Clean Pipeline</span>
-    </a>
-    <a href="#compare" class="nav-item" id="nav-compare">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="9" height="18" rx="1" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="9" height="18" rx="1" stroke="currentColor" stroke-width="2"/></svg>
-      <span>Before / After</span>
-    </a>
-    <a href="#report" class="nav-item" id="nav-report">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Report</span>
-    </a>
-
-    <div class="nav-label" style="margin-top:8px;">SETTINGS</div>
-    <div class="clean-options">
-      <p class="clean-options-title">Cleaning Rules</p>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-missing" checked/><span class="toggle-track"></span>
-        <span>Fix Missing Values</span>
-      </label>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-dupes" checked/><span class="toggle-track"></span>
-        <span>Remove Duplicates</span>
-      </label>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-case" checked/><span class="toggle-track"></span>
-        <span>Normalize Text Case</span>
-      </label>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-whitespace" checked/><span class="toggle-track"></span>
-        <span>Trim Whitespace</span>
-      </label>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-outliers" checked/><span class="toggle-track"></span>
-        <span>Flag Outliers</span>
-      </label>
-      <label class="option-toggle">
-        <input type="checkbox" id="opt-types" checked/><span class="toggle-track"></span>
-        <span>Fix Data Types</span>
-      </label>
-
-      <div class="missing-strategy">
-        <label class="ctrl-label">Missing Value Strategy</label>
-        <select id="missingStrategy" class="ctrl-select">
-          <option value="mean">Fill with Mean</option>
-          <option value="median">Fill with Median</option>
-          <option value="mode">Fill with Mode</option>
-          <option value="drop">Drop Rows</option>
-          <option value="zero">Fill with Zero</option>
-        </select>
-      </div>
-    </div>
-  </nav>
-
-  <div class="sidebar-footer">
-    <div class="algo-badge">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Auto-Cleaning Engine
-    </div>
-  </div>
-</aside>
-
-<!-- ── MAIN ────────────────────────────────────────────── -->
-<main class="main" id="main">
-
-  <!-- Topbar -->
+  <!-- Top Navigation -->
   <header class="topbar">
     <div class="topbar-left">
-      <h1 class="page-title">Data Cleaning & Reporting Automation</h1>
-      <p class="page-subtitle">Automated preprocessing pipeline with quality analysis & reports</p>
+      <div class="logo">
+        <!-- Minimal Vercel-like triangle logo -->
+        <svg viewBox="0 0 76 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="#ffffff"/></svg>
+        CleanFlow
+      </div>
+      <span class="separator">/</span>
+      <span class="project-name">Data Pipeline</span>
     </div>
     <div class="topbar-right">
-      <button class="btn-run" id="btnRunPipeline" disabled>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
-        Run Pipeline
-      </button>
-      <button class="btn-export" id="btnExport" disabled>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        Export Clean Data
-      </button>
-      <button class="btn-report" id="btnReport" disabled>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        Export Report
-      </button>
+      <button class="btn btn-secondary" id="btnReport" disabled>Report</button>
+      <button class="btn btn-secondary" id="btnExport" disabled>Export Data</button>
+      <button class="btn btn-primary" id="btnRunPipeline" disabled>Run Pipeline</button>
     </div>
   </header>
 
-  <div class="content" id="content">
+  <!-- Main Dashboard Content -->
+  <main class="main-content">
 
-    <!-- Upload Zone -->
-    <section class="upload-section" id="upload">
-      <div class="drop-zone-main" id="dropZoneMain">
-        <div class="drop-inner">
-          <div class="drop-icon-wrap">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <h2 class="drop-title">Drop your CSV or Excel file here</h2>
-          <p class="drop-sub">Supports <strong>.csv</strong> — or <button class="btn-sample-inline" id="btnSample">load sample dataset</button></p>
-          <label class="btn-browse-main" for="fileInputMain">Browse File</label>
-          <input type="file" id="fileInputMain" accept=".csv" hidden/>
+    <!-- Upload Section -->
+    <section id="uploadSection">
+      <div class="upload-zone" id="dropZoneMain">
+        <div class="upload-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
         </div>
+        <h2 class="upload-title">Import Dataset</h2>
+        <p class="upload-sub">Drag & drop your .csv file here or <a id="btnBrowse">browse files</a>.</p>
+        <p class="upload-sub" style="margin-top: 8px; font-size: 12px;">No data? <a id="btnSample">Load sample dataset</a></p>
+        <input type="file" id="fileInputMain" accept=".csv" hidden/>
       </div>
     </section>
 
-    <!-- File Loaded State (hidden until data loaded) -->
+    <!-- Dashboard Body (Hidden until data loaded) -->
     <div id="dashboardArea" class="hidden">
-
-      <!-- Quality KPIs -->
-      <section class="kpi-grid" id="quality">
-        <div class="kpi-card kpi-score-card" id="kpiScore">
-          <div class="score-ring-wrap">
-            <svg class="score-ring" viewBox="0 0 80 80">
-              <circle class="score-ring-bg" cx="40" cy="40" r="34"/>
-              <circle class="score-ring-fill" id="scoreRingFill" cx="40" cy="40" r="34"
-                stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
-            </svg>
-            <div class="score-center">
-              <span class="score-num" id="scoreNum">0</span>
-              <span class="score-pct">%</span>
-            </div>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Data Quality Score</p>
-            <p class="kpi-sub" id="scoreGrade">Calculating...</p>
+      
+      <!-- KPI Metrics -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <p class="kpi-label">QUALITY SCORE</p>
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <h3 class="kpi-value" id="scoreNum">--</h3>
+            <span class="kpi-trend trend-neutral" id="scoreGrade">--</span>
           </div>
         </div>
-
         <div class="kpi-card">
-          <div class="kpi-icon kpi-icon--amber">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Missing Values</p>
-            <h2 class="kpi-value" id="kpiMissing">—</h2>
-            <p class="kpi-sub" id="kpiMissingPct">across all columns</p>
-          </div>
+          <p class="kpi-label">TOTAL ROWS</p>
+          <h3 class="kpi-value" id="kpiRows">--</h3>
+          <p class="kpi-sub" id="kpiCols">-- columns</p>
         </div>
-
         <div class="kpi-card">
-          <div class="kpi-icon kpi-icon--red">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12A9 9 0 1 1 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Duplicates</p>
-            <h2 class="kpi-value" id="kpiDupes">—</h2>
-            <p class="kpi-sub" id="kpiDupesPct">duplicate rows found</p>
-          </div>
+          <p class="kpi-label">MISSING CELLS</p>
+          <h3 class="kpi-value" id="kpiMissing">--</h3>
+          <p class="kpi-sub" id="kpiMissingPct">--</p>
         </div>
-
         <div class="kpi-card">
-          <div class="kpi-icon kpi-icon--cyan">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Total Rows</p>
-            <h2 class="kpi-value" id="kpiRows">—</h2>
-            <p class="kpi-sub" id="kpiCols">columns detected</p>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-icon--green">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Rows After Clean</p>
-            <h2 class="kpi-value" id="kpiCleanRows">—</h2>
-            <p class="kpi-sub" id="kpiFixed">issues fixed</p>
-          </div>
+          <p class="kpi-label">DUPLICATES</p>
+          <h3 class="kpi-value" id="kpiDupes">--</h3>
+          <p class="kpi-sub" id="kpiDupesPct">--</p>
         </div>
       </section>
 
-      <!-- Pipeline Visualization -->
-      <section class="pipeline-section" id="pipeline">
+      <!-- Pipeline Track -->
+      <section>
         <div class="section-header">
-          <h2 class="section-title">Cleaning Pipeline</h2>
-          <p class="section-sub">Step-by-step automated data preprocessing stages</p>
+          <h2 class="section-title">Execution Pipeline</h2>
+          <p class="section-sub">Data transformation lifecycle and processing rules.</p>
         </div>
-        <div class="pipeline-track">
-          <div class="pipeline-step" id="step-ingest">
-            <div class="step-icon step-icon--done"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Ingest</p>
-            <p class="step-detail" id="step-ingest-detail">Waiting…</p>
-          </div>
-          <div class="pipeline-connector" id="conn-1"></div>
-          <div class="pipeline-step" id="step-profile">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Profile</p>
-            <p class="step-detail" id="step-profile-detail">Pending</p>
-          </div>
-          <div class="pipeline-connector" id="conn-2"></div>
-          <div class="pipeline-step" id="step-missing">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Missing Values</p>
-            <p class="step-detail" id="step-missing-detail">Pending</p>
-          </div>
-          <div class="pipeline-connector" id="conn-3"></div>
-          <div class="pipeline-step" id="step-dupes">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Duplicates</p>
-            <p class="step-detail" id="step-dupes-detail">Pending</p>
-          </div>
-          <div class="pipeline-connector" id="conn-4"></div>
-          <div class="pipeline-step" id="step-normalize">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Normalize</p>
-            <p class="step-detail" id="step-normalize-detail">Pending</p>
-          </div>
-          <div class="pipeline-connector" id="conn-5"></div>
-          <div class="pipeline-step" id="step-outliers">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-            <p class="step-name">Outliers</p>
-            <p class="step-detail" id="step-outliers-detail">Pending</p>
-          </div>
-          <div class="pipeline-connector" id="conn-6"></div>
-          <div class="pipeline-step" id="step-export">
-            <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <p class="step-name">Clean</p>
-            <p class="step-detail" id="step-export-detail">Pending</p>
+        <div class="pipeline-card">
+          <div class="pipeline-track">
+            <div class="pipeline-line"></div>
+            
+            <div class="pipeline-step step-complete" id="step-ingest">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <span class="step-name">Ingest</span>
+              <span class="step-detail" id="step-ingest-detail">Ready</span>
+            </div>
+            
+            <div class="pipeline-step step-active" id="step-profile">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <span class="step-name">Profile</span>
+              <span class="step-detail" id="step-profile-detail">Pending</span>
+            </div>
+            
+            <div class="pipeline-step" id="step-missing">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+              <span class="step-name">Clean</span>
+              <span class="step-detail" id="step-missing-detail">Pending</span>
+            </div>
+            
+            <div class="pipeline-step" id="step-dupes">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+              <span class="step-name">Dedupe</span>
+              <span class="step-detail" id="step-dupes-detail">Pending</span>
+            </div>
+
+            <div class="pipeline-step" id="step-outliers">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+              <span class="step-name">Validate</span>
+              <span class="step-detail" id="step-outliers-detail">Pending</span>
+            </div>
+            
+            <div class="pipeline-step" id="step-export">
+              <div class="step-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <span class="step-name">Output</span>
+              <span class="step-detail" id="step-export-detail">Pending</span>
+            </div>
+
           </div>
         </div>
       </section>
 
-      <!-- Charts Row -->
-      <section class="charts-row" id="charts">
+      <!-- Charts -->
+      <section class="charts-grid">
         <div class="chart-card">
           <div class="chart-header">
-            <div><h3 class="chart-title" id="missingChartTitle">Missing Values per Column</h3><p class="chart-sub" id="missingChartSub">Count of nulls / blanks detected</p></div>
+            <h3 class="chart-title" id="missingChartTitle">Data Health</h3>
+            <p class="chart-sub" id="missingChartSub">Missing values and anomalies by column.</p>
           </div>
           <div class="chart-body"><canvas id="missingChart"></canvas></div>
         </div>
         <div class="chart-card">
           <div class="chart-header">
-            <div><h3 class="chart-title" id="typeChartTitle">Data Type Distribution</h3><p class="chart-sub" id="typeChartSub">Column type breakdown</p></div>
+            <h3 class="chart-title" id="typeChartTitle">Type Inference</h3>
+            <p class="chart-sub" id="typeChartSub">Detected schema types across the dataset.</p>
           </div>
           <div class="chart-body chart-body--donut">
             <canvas id="typeChart"></canvas>
             <div class="donut-center">
               <span class="donut-val" id="typeTotal">—</span>
-              <span class="donut-lbl">Columns</span>
+              <span class="donut-lbl">Cols</span>
             </div>
           </div>
         </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><h3 class="chart-title" id="fixChartTitle">Issues Fixed by Stage</h3><p class="chart-sub" id="fixChartSub">Cleaning impact per pipeline step</p></div>
+      </section>
+
+      <!-- Data Table -->
+      <section>
+        <div class="section-header">
+          <h2 class="section-title">Data Explorer</h2>
+          <p class="section-sub">Inspect records and verification diffs.</p>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-tabs">
+              <button class="table-tab active" id="tabBefore" onclick="switchTab('before')">Raw Payload</button>
+              <button class="table-tab" id="tabAfter" onclick="switchTab('after')">Processed Output</button>
+            </div>
           </div>
-          <div class="chart-body"><canvas id="fixChart"></canvas></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="rowsInfo">Page 1 / 1</span>
+            <div class="pagination" id="pagination"></div>
+          </div>
         </div>
       </section>
 
-      <!-- Column Profiler -->
-      <section class="profiler-section">
+      <!-- Profiler Cards -->
+      <section>
         <div class="section-header">
-          <h2 class="section-title">Column Profiler</h2>
-          <p class="section-sub">Individual statistics and quality per column</p>
+          <h2 class="section-title">Schema Introspection</h2>
+          <p class="section-sub">Detailed statistics and distribution per attribute.</p>
         </div>
         <div class="profiler-grid" id="profilerGrid"></div>
       </section>
 
-      <!-- Before / After Compare -->
-      <section class="compare-section" id="compare">
-        <div class="compare-header">
-          <div class="compare-tabs">
-            <button class="compare-tab active" id="tabBefore" onclick="switchTab('before')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              Raw Data
-            </button>
-            <button class="compare-tab" id="tabAfter" onclick="switchTab('after')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Cleaned Data
-            </button>
-          </div>
-          <div class="compare-controls">
-            <div class="search-box">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <input type="text" id="tableSearch" class="search-input" placeholder="Search data…"/>
-            </div>
-            <span class="rows-badge" id="tableRowsBadge">— rows</span>
-          </div>
-        </div>
-        <div class="table-wrapper">
-          <table class="data-table" id="dataTable">
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-        <div class="table-footer">
-          <div class="pagination" id="pagination"></div>
-          <span class="rows-info" id="rowsInfo"></span>
-        </div>
-      </section>
-
-      <!-- Report Section -->
-      <section class="report-section" id="report">
-        <div class="section-header">
-          <h2 class="section-title">Automated Report</h2>
-          <p class="section-sub">Auto-generated data quality summary</p>
-        </div>
-        <div class="report-card" id="reportCard">
-          <div class="report-top">
-            <div class="report-meta">
-              <h3 id="rTitle">Dataset Report</h3>
-              <span id="rTimestamp" class="report-ts"></span>
-            </div>
-            <div class="report-grade" id="rGrade">—</div>
-          </div>
-          <div class="report-body" id="reportBody"></div>
-          <div class="report-findings" id="reportFindings"></div>
-        </div>
-      </section>
-
-    </div><!-- #dashboardArea -->
-  </div><!-- .content -->
-</main>
+    </div>
+  </main>
+</div>
 
 <!-- Toast -->
-<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+<div class="toast-container">
+  <div id="toast" class="toast"></div>
+</div>
 
 <script src="app.js"></script>
 </body>
