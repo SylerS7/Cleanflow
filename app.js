@@ -346,6 +346,7 @@ async function runPipeline() {
   updateCleanKPIs(cleanScore, rawIssues, cleanIssues, cleanData.length);
   buildPostCharts(rawProfile, cleanProfile);
   buildProfilerCards(cleanProfile);
+  buildInsights(rawIssues, cleanIssues, missingFixed, removedDupes, flagged);
 
   document.getElementById('btnRunPipeline').disabled = false;
   document.getElementById('btnExport').disabled = false;
@@ -354,6 +355,74 @@ async function runPipeline() {
   pipelineRan = true;
   switchTab('after');
   showToast(`✓ Pipeline complete. ${missingFixed} cells fixed · ${removedDupes} dupes removed · ${flagged} outliers flagged.`, 'success');
+}
+
+// ── INSIGHTS ──────────────────────────────────────────────
+function buildInsights(rawIss, cleanIss, missingFixed, dupesRemoved, outliersFlagged) {
+  const panel = document.getElementById('insightsPanel');
+  const grid  = document.getElementById('insightsGrid');
+  panel.classList.remove('hidden');
+
+  const remainingMissing = cleanIss.missing;
+  const remainingEmails  = cleanIss.badEmails;
+  const remainingOutliers = cleanIss.outliers;
+
+  const cards = [];
+
+  // ── RESOLVED cards ──
+  if (missingFixed > 0) {
+    cards.push({ type:'resolved', count: missingFixed, title: 'Missing cells imputed',
+      desc: `${missingFixed} blank or invalid cells were filled automatically using the column mean for numeric fields, and left as empty string for text fields.` });
+  }
+
+  if (dupesRemoved > 0) {
+    cards.push({ type:'resolved', count: dupesRemoved, title: 'Duplicate rows removed',
+      desc: `${dupesRemoved} exact duplicate records were identified and eliminated. The dataset was reduced from ${rawData.length} → ${cleanData.length} rows.` });
+  }
+
+  // ── FLAGGED cards (partially resolved) ──
+  if (outliersFlagged > 0) {
+    cards.push({ type:'flagged', count: outliersFlagged, title: 'Outliers flagged (not removed)',
+      desc: `${outliersFlagged} values exceeded statistical bounds (IQR) or violated business rules (e.g. age > 130, score > 100, fees < 0). They are highlighted in the data table but kept intact — removing them requires your confirmation.` });
+  }
+
+  if (remainingEmails > 0) {
+    cards.push({ type:'flagged', count: remainingEmails, title: 'Invalid emails flagged',
+      desc: `${remainingEmails} email addresses failed format validation. CleanFlow cannot auto-correct email addresses since the correct value is unknown. These are highlighted in red in the Raw Payload view.` });
+  }
+
+  // ── MANUAL / REMAINING cards ──
+  if (remainingMissing > 0) {
+    cards.push({ type:'manual', count: remainingMissing, title: 'Missing values remain',
+      desc: `${remainingMissing} cells could not be imputed. This usually happens in text columns (e.g. names, categories) where a statistical mean doesn't apply. Review these rows manually or drop them.` });
+  }
+
+  if (cleanIss.ruleViols > 0) {
+    cards.push({ type:'manual', count: cleanIss.ruleViols, title: 'Business rule violations',
+      desc: `${cleanIss.ruleViols} values break defined domain rules (e.g. attendance > 100%, negative fees). These are preserved as-is — correct the source data or adjust the business rules to exclude known edge cases.` });
+  }
+
+  // ── INFO cards ──
+  const totalResolved = missingFixed + dupesRemoved;
+  const totalRemaining = cleanIss.total;
+  if (totalRemaining === 0) {
+    cards.push({ type:'info', count: '✓', title: 'All issues resolved',
+      desc: `The pipeline successfully resolved all ${rawIss.total} detected issues. Your dataset is clean and ready for export.` });
+  } else {
+    cards.push({ type:'info', count: totalRemaining, title: 'Issues requiring manual review',
+      desc: `${totalRemaining} issues could not be auto-resolved. Outliers and rule violations are flagged in the data table. Invalid emails need source correction. Review the Schema Introspection section below for column-level detail.` });
+  }
+
+  grid.innerHTML = cards.map(c => `
+    <div class="insight-card ${c.type}">
+      <div class="insight-tag ${c.type}">
+        <span>${c.type === 'resolved' ? '✓ RESOLVED' : c.type === 'flagged' ? '⚠ FLAGGED' : c.type === 'manual' ? '✗ MANUAL REVIEW' : 'ℹ INFO'}</span>
+      </div>
+      <div class="insight-count">${c.count}</div>
+      <div class="insight-title">${c.title}</div>
+      <div class="insight-desc">${c.desc}</div>
+    </div>
+  `).join('');
 }
 
 // ── CHART DEFAULTS ────────────────────────────────────────
@@ -580,6 +649,7 @@ async function loadData(rows, filename = 'dataset.csv') {
   document.getElementById('btnRunPipeline').disabled = false;
   document.getElementById('btnExport').disabled = true;
   document.getElementById('btnReport').disabled = true;
+  document.getElementById('insightsPanel').classList.add('hidden');
   resetSteps();
 
   // Show raw KPIs + charts

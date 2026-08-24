@@ -170,6 +170,36 @@ body {
 .trend-bad { background: rgba(239,68,68,0.1); color: var(--acc-red); }
 .trend-neutral { background: rgba(255,255,255,0.1); color: var(--txt); }
 
+/* ── INSIGHTS PANEL ──────────────────────────────── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.insight-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.insight-card.resolved { border-left: 3px solid var(--acc-green); }
+.insight-card.flagged  { border-left: 3px solid var(--acc-amber); }
+.insight-card.manual   { border-left: 3px solid var(--acc-red); }
+.insight-card.info     { border-left: 3px solid var(--border-hover, #444); }
+
+.insight-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; display: flex; align-items: center; gap: 6px;
+}
+.insight-tag.resolved { color: var(--acc-green); }
+.insight-tag.flagged  { color: var(--acc-amber); }
+.insight-tag.manual   { color: var(--acc-red); }
+.insight-tag.info     { color: var(--txt-muted); }
+
+.insight-count { font-size: 26px; font-weight: 600; letter-spacing: -0.04em; }
+.insight-title { font-size: 13px; font-weight: 500; }
+.insight-desc  { font-size: 12px; color: var(--txt-muted); line-height: 1.6; }
+
 /* ── PIPELINE TRACK ──────────────────────────────── */
 .pipeline-card {
   border: 1px solid var(--border);
