@@ -117,6 +117,34 @@ body {
 .upload-sub { font-size: 14px; color: var(--txt-muted); }
 .upload-sub a { color: var(--txt); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 
+/* ── LOADING SCREEN ──────────────────────────────── */
+.loading-box {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 80px 40px;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 16px;
+}
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--txt);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-title { font-size: 16px; font-weight: 500; }
+.loading-sub   { font-size: 13px; color: var(--txt-muted); }
+.loading-steps { font-size: 12px; color: var(--txt-dim); font-family: var(--font-mono); min-height: 18px; }
+.loading-bar-bg {
+  width: 240px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+.loading-bar-fg {
+  height: 100%; background: var(--txt); border-radius: 2px;
+  width: 0%; transition: width 0.35s ease;
+}
+
 /* ── SECTION HEADERS ─────────────────────────────── */
 .section-header { margin-bottom: 16px; }
 .section-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }

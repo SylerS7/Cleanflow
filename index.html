@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CleanFlow | Observability Dashboard</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- PapaParse -->
@@ -48,6 +48,19 @@
         <p class="upload-sub">Drag & drop your .csv file here or <a id="btnBrowse">browse files</a>.</p>
         <p class="upload-sub" style="margin-top: 8px; font-size: 12px;">No data? <a id="btnSample">Load sample dataset</a></p>
         <input type="file" id="fileInputMain" accept=".csv" hidden/>
+      </div>
+    </section>
+
+    <!-- Loading Screen -->
+    <section id="loadingScreen" class="hidden">
+      <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <p class="loading-title" id="loadingTitle">Reading file…</p>
+        <p class="loading-sub" id="loadingSub">Parsing CSV structure</p>
+        <div class="loading-bar-bg">
+          <div class="loading-bar-fg" id="loadingBar"></div>
+        </div>
+        <p class="loading-steps" id="loadingSteps"></p>
       </div>
     </section>
 
@@ -198,6 +211,6 @@
   <div id="toast" class="toast"></div>
 </div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

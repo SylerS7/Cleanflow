@@ -520,12 +520,54 @@ function renderTable() {
 }
 
 // ── LOAD ──────────────────────────────────────────────────
-function loadData(rows, filename = 'dataset.csv') {
+function showLoading(show) {
+  document.getElementById('loadingScreen').classList.toggle('hidden', !show);
+}
+
+function setLoadingProgress(pct, title, sub, step) {
+  document.getElementById('loadingBar').style.width   = pct + '%';
+  document.getElementById('loadingTitle').textContent = title;
+  document.getElementById('loadingSub').textContent   = sub;
+  document.getElementById('loadingSteps').textContent = step || '';
+}
+
+async function loadData(rows, filename = 'dataset.csv') {
   if (!rows || !rows.length) { showToast('No data found in file.', 'error'); return; }
+
+  // 1. Hide upload, show loading
+  document.getElementById('uploadSection').classList.add('hidden');
+  document.getElementById('dashboardArea').classList.add('hidden');
+  showLoading(true);
+
+  setLoadingProgress(10, 'Reading file…', 'Parsing CSV structure', `→ ${rows.length} rows detected`);
+  await sleep(400);
+
+  setLoadingProgress(30, 'Inferring schema…', 'Detecting column types', `→ ${Object.keys(rows[0]).length} attributes`);
+  await sleep(450);
+
+  // 2. Run the actual work
   rawData = rows; headers = Object.keys(rows[0]); cleanData = []; pipelineRan = false; removedDupes = 0;
 
-  // Hide upload zone, show dashboard
-  document.getElementById('uploadSection').classList.add('hidden');
+  setLoadingProgress(55, 'Profiling raw data…', 'Computing statistics per column', '→ missing values, ranges, types');
+  await sleep(400);
+
+  rawProfile = profileDataset(rawData);
+
+  setLoadingProgress(75, 'Detecting duplicates…', 'Cross-referencing rows', '→ exact row matching');
+  await sleep(350);
+
+  rawDupes  = detectDuplicates(rawData);
+  rawIssues = summariseIssues(rawData, rawProfile, rawDupes);
+  const rawScore = calcScore(rawData, rawIssues);
+
+  setLoadingProgress(90, 'Building dashboard…', 'Rendering charts and profiler cards', '→ almost done');
+  await sleep(350);
+
+  setLoadingProgress(100, 'Complete', `Score: ${rawScore} · ${rawIssues.total} issues found`, '');
+  await sleep(300);
+
+  // 3. Hide loading, show dashboard
+  showLoading(false);
   document.getElementById('dashboardArea').classList.remove('hidden');
   document.getElementById('btnUploadNew').classList.remove('hidden');
 
@@ -534,27 +576,19 @@ function loadData(rows, filename = 'dataset.csv') {
   const fnEl = document.getElementById('fileName');
   fnEl.textContent = filename; fnEl.classList.remove('hidden');
 
-  // Reset buttons & steps
+  // Buttons
   document.getElementById('btnRunPipeline').disabled = false;
   document.getElementById('btnExport').disabled = true;
   document.getElementById('btnReport').disabled = true;
   resetSteps();
 
-  // ⬇ Profile RAW data FIRST — do not clean yet
-  rawProfile = profileDataset(rawData);
-  rawDupes   = detectDuplicates(rawData);
-  rawIssues  = summariseIssues(rawData, rawProfile, rawDupes);
-  const rawScore = calcScore(rawData, rawIssues);
-
-  // Show raw KPIs
+  // Show raw KPIs + charts
   updateRawKPIs(rawScore, rawIssues, rawData.length);
-
-  // Build raw charts
   buildRawCharts(rawProfile);
   buildProfilerCards(rawProfile);
   switchTab('before');
 
-  showToast(`Loaded ${filename} · ${rawData.length} rows · ${headers.length} cols · score: ${rawScore}`);
+  showToast(`✓ ${filename} loaded · ${rawIssues.total} issues found · score: ${rawScore}`);
 }
 
 function parseCsvText(text) {
