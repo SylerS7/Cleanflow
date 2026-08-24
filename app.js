@@ -526,6 +526,7 @@ function buildRawCharts(prof, issues) {
           return pct > 0.1 ? COLORS.red : COLORS.amber;
         }),
         borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+        barPercentage: 0.6, categoryPercentage: 0.8
       }]
     },
     options: {
@@ -569,6 +570,7 @@ function buildRawCharts(prof, issues) {
         backgroundColor: qualities.map(q => q >= 80 ? COLORS.green + '99' : q >= 50 ? COLORS.amber + '99' : COLORS.red + '99'),
         borderColor:     qualities.map(q => q >= 80 ? COLORS.green : q >= 50 ? COLORS.amber : COLORS.red),
         borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+        barPercentage: 0.6, categoryPercentage: 0.8
       }]
     },
     options: {
@@ -601,9 +603,11 @@ function buildPostCharts(rProf, cProf, fixes) {
       labels: colsWithIssues.length ? colsWithIssues : ['No issues'],
       datasets: [
         { label: 'Before', data: colsWithIssues.map(h => rProf[h].missing + (rProf[h].invalidNumeric || 0)),
-          backgroundColor: COLORS.red + '88', borderColor: COLORS.red, borderWidth: 1.5, borderRadius: 5, borderSkipped: false },
+          backgroundColor: COLORS.red + '88', borderColor: COLORS.red, borderWidth: 1.5, borderRadius: 5, borderSkipped: false,
+          barPercentage: 0.8, categoryPercentage: 0.8 },
         { label: 'After',  data: colsWithIssues.map(h => (cProf[h]?.missing || 0) + (cProf[h]?.invalidNumeric || 0)),
-          backgroundColor: COLORS.green + '88', borderColor: COLORS.green, borderWidth: 1.5, borderRadius: 5, borderSkipped: false }
+          backgroundColor: COLORS.green + '88', borderColor: COLORS.green, borderWidth: 1.5, borderRadius: 5, borderSkipped: false,
+          barPercentage: 0.8, categoryPercentage: 0.8 }
       ]
     },
     options: {
@@ -631,7 +635,8 @@ function buildPostCharts(rProf, cProf, fixes) {
       labels: fixLabels,
       datasets: [{ label: 'Fixed', data: fixVals,
         backgroundColor: fixColors.map(c => c + '99'), borderColor: fixColors,
-        borderWidth: 1.5, borderRadius: 6, borderSkipped: false }]
+        borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+        barPercentage: 0.6, categoryPercentage: 0.8 }]
     },
     options: {
       responsive: true, animation: { duration: 600 },

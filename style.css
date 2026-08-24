@@ -95,7 +95,7 @@ body {
 
 .sidebar-nav {
   flex: 1; padding: 16px 12px;
-  display: flex; flex-direction: column; gap: 3px;
+  display: flex; flex-direction: column; gap: 8px;
   overflow-y: auto;
 }
 .nav-label {
@@ -275,7 +275,7 @@ body {
 .kpi-grid {
   display: grid;
   grid-template-columns: auto 1fr 1fr 1fr 1fr;
-  gap: 16px;
+  gap: 24px;
   align-items: stretch;
 }
 
@@ -372,7 +372,7 @@ body {
 .charts-row {
   display: grid;
   grid-template-columns: 1.3fr 0.9fr 1fr;
-  gap: 18px;
+  gap: 24px;
 }
 .chart-card {
   background: var(--bg-card);
@@ -463,7 +463,7 @@ body {
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap; gap: 12px;
 }
-.compare-tabs { display: flex; gap: 8px; }
+.compare-tabs { display: flex; gap: 16px; }
 .compare-tab {
   display: flex; align-items: center; gap: 7px;
   background: none; border: 1px solid var(--border-l);
