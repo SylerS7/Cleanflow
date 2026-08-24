@@ -272,13 +272,13 @@
       <section class="charts-row" id="charts">
         <div class="chart-card">
           <div class="chart-header">
-            <div><h3 class="chart-title">Missing Values per Column</h3><p class="chart-sub">Count of nulls / blanks detected</p></div>
+            <div><h3 class="chart-title" id="missingChartTitle">Missing Values per Column</h3><p class="chart-sub" id="missingChartSub">Count of nulls / blanks detected</p></div>
           </div>
           <div class="chart-body"><canvas id="missingChart"></canvas></div>
         </div>
         <div class="chart-card">
           <div class="chart-header">
-            <div><h3 class="chart-title">Data Type Distribution</h3><p class="chart-sub">Column type breakdown</p></div>
+            <div><h3 class="chart-title" id="typeChartTitle">Data Type Distribution</h3><p class="chart-sub" id="typeChartSub">Column type breakdown</p></div>
           </div>
           <div class="chart-body chart-body--donut">
             <canvas id="typeChart"></canvas>
@@ -290,7 +290,7 @@
         </div>
         <div class="chart-card">
           <div class="chart-header">
-            <div><h3 class="chart-title">Issues Fixed by Stage</h3><p class="chart-sub">Cleaning impact per pipeline step</p></div>
+            <div><h3 class="chart-title" id="fixChartTitle">Issues Fixed by Stage</h3><p class="chart-sub" id="fixChartSub">Cleaning impact per pipeline step</p></div>
           </div>
           <div class="chart-body"><canvas id="fixChart"></canvas></div>
         </div>

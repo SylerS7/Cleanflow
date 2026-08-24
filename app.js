@@ -435,7 +435,7 @@ async function runPipeline() {
   pipelineLog.push({ step: 'Clean Export', detail: `${cleanData.length} rows, score: ${cleanScore}%` });
 
   updateKPIs(cleanScore, cleanIssues, rawData.length, cleanData.length);
-  buildCharts(rawProfile, cleanProfile, rawIssues, cleanIssues, { missingFixed, exactRemoved, keyDupesRemoved, normFixed, outliersFlagged });
+  buildPostCharts(rawProfile, cleanProfile, { missingFixed, exactRemoved, keyDupesRemoved, normFixed, outliersFlagged });
   buildProfilerCards(cleanProfile, rawProfile);
   buildSummaryBanner(rawIssues, cleanIssues, rawData.length, cleanData.length);
   buildReport(cleanScore, rawIssues, cleanIssues, rawData.length, cleanData.length);
@@ -500,47 +500,155 @@ function buildSummaryBanner(raw, clean, rawRows, cleanRows) {
   if (chartsSection) chartsSection.parentNode.insertBefore(banner, chartsSection);
 }
 
-// ── Charts ─────────────────────────────────────────────────
-function buildCharts(rProf, cProf, rIssues, cIssues, fixes) {
-  // Missing per column (RAW vs CLEAN)
+// ── Charts (pre-pipeline: raw data only) ───────────────────
+function buildRawCharts(prof, issues) {
+  // Missing Values per column — single bar, all columns
   destroyChart('missingChart');
-  const colsWithIssues = headers.filter(h =>
-    rProf[h].missing > 0 || rProf[h].invalidNumeric > 0
-  );
+  const missingCols = headers.filter(h => prof[h].missing > 0 || prof[h].invalidNumeric > 0);
+  const ctx1 = document.getElementById('missingChart').getContext('2d');
+  document.getElementById('missingChartTitle').textContent = 'Missing Values per Column';
+  document.getElementById('missingChartSub').textContent   = 'Nulls, blanks & invalid strings detected in raw data';
+  chartMap['missingChart'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: missingCols.length ? missingCols : ['(none)'],
+      datasets: [{
+        label: 'Missing / Invalid',
+        data: missingCols.length
+          ? missingCols.map(h => prof[h].missing + (prof[h].invalidNumeric || 0))
+          : [0],
+        backgroundColor: missingCols.map(h => {
+          const pct = (prof[h].missing + (prof[h].invalidNumeric||0)) / prof[h].total;
+          return pct > 0.1 ? COLORS.red + '99' : COLORS.amber + '99';
+        }),
+        borderColor: missingCols.map(h => {
+          const pct = (prof[h].missing + (prof[h].invalidNumeric||0)) / prof[h].total;
+          return pct > 0.1 ? COLORS.red : COLORS.amber;
+        }),
+        borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, animation: { duration: 700 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12,
+          callbacks: { label: ctx => `  ${ctx.parsed.y} missing / invalid cells` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#7a8499' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Type Distribution Donut
+  buildTypeChart(prof);
+
+  // Quality Score per Column — horizontal bar
+  destroyChart('fixChart');
+  document.getElementById('fixChartTitle').textContent = 'Column Quality Scores';
+  document.getElementById('fixChartSub').textContent   = 'Data health per column (before cleaning)';
+  const qualities = headers.map(h => {
+    const p = prof[h];
+    return Math.max(0, Math.round(100
+      - (p.missing / p.total) * 100
+      - (p.invalidNumeric || 0) / p.total * 100
+      - (p.outlierCount || 0) / p.total * 50
+      - (p.emailStats?.invalid || 0) / p.total * 100
+    ));
+  });
+  const ctx3 = document.getElementById('fixChart').getContext('2d');
+  chartMap['fixChart'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: headers,
+      datasets: [{
+        label: 'Quality %',
+        data: qualities,
+        backgroundColor: qualities.map(q => q >= 80 ? COLORS.green + '99' : q >= 50 ? COLORS.amber + '99' : COLORS.red + '99'),
+        borderColor:     qualities.map(q => q >= 80 ? COLORS.green : q >= 50 ? COLORS.amber : COLORS.red),
+        borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, animation: { duration: 700 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12,
+          callbacks: { label: ctx => `  Quality: ${ctx.parsed.y}%` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#7a8499' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, min: 0, max: 100,
+          ticks: { font: { size: 11 }, callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// ── Charts (post-pipeline: before vs after) ─────────────────
+function buildPostCharts(rProf, cProf, fixes) {
+  // Before vs After: missing per column
+  destroyChart('missingChart');
+  const colsWithIssues = headers.filter(h => rProf[h].missing > 0 || rProf[h].invalidNumeric > 0);
+  document.getElementById('missingChartTitle').textContent = 'Missing Values — Before vs After';
+  document.getElementById('missingChartSub').textContent   = 'Count of nulls / invalid strings per column';
   const ctx1 = document.getElementById('missingChart').getContext('2d');
   chartMap['missingChart'] = new Chart(ctx1, {
     type: 'bar',
     data: {
       labels: colsWithIssues.length ? colsWithIssues : ['No issues'],
       datasets: [
-        {
-          label: 'Before',
-          data: colsWithIssues.map(h => rProf[h].missing + (rProf[h].invalidNumeric || 0)),
-          backgroundColor: COLORS.red + '88', borderColor: COLORS.red,
-          borderWidth: 1.5, borderRadius: 5, borderSkipped: false,
-        },
-        {
-          label: 'After',
-          data: colsWithIssues.map(h => (cProf[h]?.missing || 0) + (cProf[h]?.invalidNumeric || 0)),
-          backgroundColor: COLORS.green + '88', borderColor: COLORS.green,
-          borderWidth: 1.5, borderRadius: 5, borderSkipped: false,
-        }
+        { label: 'Before', data: colsWithIssues.map(h => rProf[h].missing + (rProf[h].invalidNumeric || 0)),
+          backgroundColor: COLORS.red + '88', borderColor: COLORS.red, borderWidth: 1.5, borderRadius: 5, borderSkipped: false },
+        { label: 'After',  data: colsWithIssues.map(h => (cProf[h]?.missing || 0) + (cProf[h]?.invalidNumeric || 0)),
+          backgroundColor: COLORS.green + '88', borderColor: COLORS.green, borderWidth: 1.5, borderRadius: 5, borderSkipped: false }
       ]
     },
     options: {
       responsive: true, animation: { duration: 600 },
       plugins: { legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11 } } },
         tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
-      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 10 } } } }
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 10 } }, beginAtZero: true } }
     }
   });
 
   // Type Distribution Donut
+  buildTypeChart(rProf);
+
+  // Issues Fixed by Stage
+  destroyChart('fixChart');
+  document.getElementById('fixChartTitle').textContent = 'Issues Fixed by Stage';
+  document.getElementById('fixChartSub').textContent   = 'Cleaning impact per pipeline step';
+  const fixLabels = ['Missing / Invalid', 'Exact Dupes', 'Key Dupes', 'Normalization', 'Outliers'];
+  const fixVals   = [fixes.missingFixed, fixes.exactRemoved, fixes.keyDupesRemoved, fixes.normFixed, fixes.outliersFlagged];
+  const fixColors = [COLORS.amber, COLORS.red, COLORS.orange, COLORS.cyan, COLORS.purple];
+  const ctx3 = document.getElementById('fixChart').getContext('2d');
+  chartMap['fixChart'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: fixLabels,
+      datasets: [{ label: 'Fixed', data: fixVals,
+        backgroundColor: fixColors.map(c => c + '99'), borderColor: fixColors,
+        borderWidth: 1.5, borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, animation: { duration: 600 },
+      plugins: { legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 10 } }, beginAtZero: true } }
+    }
+  });
+}
+
+// ── Type Donut (shared) ─────────────────────────────────────
+function buildTypeChart(prof) {
   destroyChart('typeChart');
   const typeCounts = { numeric: 0, string: 0, date: 0, email: 0, id: 0 };
-  headers.forEach(h => { typeCounts[rProf[h].type] = (typeCounts[rProf[h].type] || 0) + 1; });
-  const typeLabels  = Object.keys(typeCounts).filter(k => typeCounts[k] > 0);
-  const typeColors  = { numeric: COLORS.amber, string: COLORS.cyan, date: COLORS.purple, email: COLORS.orange, id: COLORS.green };
+  headers.forEach(h => { typeCounts[prof[h].type] = (typeCounts[prof[h].type] || 0) + 1; });
+  const typeLabels = Object.keys(typeCounts).filter(k => typeCounts[k] > 0);
+  const typeColors = { numeric: COLORS.amber, string: COLORS.cyan, date: COLORS.purple, email: COLORS.orange, id: COLORS.green };
   document.getElementById('typeTotal').textContent = headers.length;
   const ctx2 = document.getElementById('typeChart').getContext('2d');
   chartMap['typeChart'] = new Chart(ctx2, {
@@ -555,28 +663,6 @@ function buildCharts(rProf, cProf, rIssues, cIssues, fixes) {
     options: { cutout: '65%', responsive: true, animation: { duration: 700 },
       plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11 } } },
         tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } } }
-  });
-
-  // Issues Fixed by Stage
-  destroyChart('fixChart');
-  const fixLabels = ['Missing / Invalid', 'Exact Dupes', 'Key Dupes', 'Normalization', 'Outliers'];
-  const fixVals   = [fixes.missingFixed, fixes.exactRemoved, fixes.keyDupesRemoved, fixes.normFixed, fixes.outliersFlagged];
-  const fixColors = [COLORS.amber, COLORS.red, COLORS.orange, COLORS.cyan, COLORS.purple];
-  const ctx3 = document.getElementById('fixChart').getContext('2d');
-  chartMap['fixChart'] = new Chart(ctx3, {
-    type: 'bar',
-    data: {
-      labels: fixLabels,
-      datasets: [{ label: 'Issues Fixed', data: fixVals,
-        backgroundColor: fixColors.map(c => c + '99'),
-        borderColor: fixColors, borderWidth: 1.5,
-        borderRadius: 5, borderSkipped: false }]
-    },
-    options: { responsive: true, animation: { duration: 600 },
-      plugins: { legend: { display: false },
-        tooltip: { backgroundColor: 'rgba(12,14,24,0.97)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
-      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 10 } } } }
-    }
   });
 }
 
@@ -765,7 +851,7 @@ function buildReport(score, rIssues, cIssues, rawRows, cleanRows) {
     </div>`).join('');
 }
 
-// ── Load Data ──────────────────────────────────────────────
+// ── Update loadData to use buildRawCharts ─────────────────
 function loadData(rows) {
   if (!rows?.length) { showToast('No valid data found', 'error'); return; }
   rawData    = rows;
@@ -793,7 +879,7 @@ function loadData(rows) {
   updateKPIs(rawScore, rawIssues, rawData.length, null);
 
   // Build initial charts based on raw data only
-  buildCharts(rawProfile, rawProfile, rawIssues, rawIssues, { missingFixed:0, exactRemoved:0, keyDupesRemoved:0, normFixed:0, outliersFlagged:0 });
+  buildRawCharts(rawProfile, rawIssues);
   buildProfilerCards(rawProfile, rawProfile);
 
   // Show raw data in table
